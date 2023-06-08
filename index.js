@@ -49,12 +49,13 @@ async function run() {
     await client.connect();
 
     const userCollection = client.db("languageLab").collection("users");
+    const classCollection = client.db("languageLab").collection("classes");
 
-    //secure apis
+    //secure apis--------------------------------------
     app.post("/jwt", (req, res) => {
       const user = req.body;
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
-        expiresIn: "2h",
+        expiresIn: '1h',
       });
       res.send({ token });
     });
@@ -72,7 +73,7 @@ async function run() {
       next();
     };
     // verify instructor 
-    const verifyInstructor = async (rew,res,next)=>{
+    const verifyInstructor = async (req,res,next)=>{
       const email = req.decoded.email;
       const query = {email:email};
       const user = await userCollection.findOne(query);
@@ -136,6 +137,14 @@ async function run() {
       const result = await userCollection.findOne(query, role);
       res.send(result);
     });
+
+    // instructor related apis ---------------
+    app.post('/class',verifyJWT,verifyInstructor, async(req,res)=>{
+      const newClass = req.body;
+      const result = await classCollection.insertOne(newClass);
+      res.send(result)
+
+    })
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
