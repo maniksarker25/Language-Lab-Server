@@ -34,6 +34,14 @@ async function run() {
     const userCollection = client.db("languageLab").collection('users');
 
 
+    //secure apis
+    app.post('/jwt', (req,res)=>{
+      const user = req.body;
+      const token = jwt.sign(user,process.env.ACCESS_TOKEN_SECRET,{
+        expiresIn: "2h",
+      });
+      res.send({token})
+    })
 
 
     //users apis 
