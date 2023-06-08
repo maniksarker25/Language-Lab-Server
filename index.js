@@ -54,20 +54,40 @@ async function run() {
     app.post("/jwt", (req, res) => {
       const user = req.body;
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
-        expiresIn: '2h',
+        expiresIn: "2h",
       });
       res.send({ token });
     });
 
-    
+    // verify admin
+    const verifyAdmin = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      if (user?.role !== "admin") {
+        return res
+          .status(403)
+          .send({ error: true, message: "forbidden message" });
+      }
+      next();
+    };
+    // verify instructor 
+    const verifyInstructor = async (rew,res,next)=>{
+      const email = req.decoded.email;
+      const query = {email:email};
+      const user = await userCollection.findOne(query);
+      if(user?.role !== 'instructor'){
+        return res.status(403).send({error:true,message:'forbidden message'});
+      }
+      next();
+    }
 
     //users apis
 
-    app.get('/users', verifyJWT, async(req,res)=>{
-    
+    app.get("/users", verifyJWT,verifyAdmin, async (req, res) => {
       const result = await userCollection.find().toArray();
       res.send(result);
-    })
+    });
     app.post("/users", async (req, res) => {
       const user = req.body;
       const query = { email: user.email };
@@ -79,7 +99,7 @@ async function run() {
       res.send(result);
     });
 
-    // make admin 
+    // make admin
     app.patch("/users/admin/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
@@ -91,31 +111,31 @@ async function run() {
       const result = await userCollection.updateOne(query, updateDoc);
       res.send(result);
     });
+    // admin related apis
 
     // make instructor ----
-    app.patch('/users/instructor/:id', async(req,res)=>{
-      const id  = req.params.id;
-      const query = {_id:new ObjectId(id)};
+    app.patch("/users/instructor/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
       const updateDoc = {
-        $set:{
-          role:'instructor',
-        }
-      }
-      const result = await userCollection.updateOne(query,updateDoc);
-      res.send(result)
-    })
+        $set: {
+          role: "instructor",
+        },
+      };
+      const result = await userCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
 
-
-    // find user role 
-    app.get('/users/check-role/:email', async(req,res)=>{
+    // find user role
+    app.get("/users/check-role/:email", async (req, res) => {
       const email = req.params.email;
-      const query = {email: email};
+      const query = { email: email };
       const role = {
-        projection: { _id:0, role:1},
-      }
-      const result = await userCollection.findOne(query,role);
-      res.send(result)
-    })
+        projection: { _id: 0, role: 1 },
+      };
+      const result = await userCollection.findOne(query, role);
+      res.send(result);
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
