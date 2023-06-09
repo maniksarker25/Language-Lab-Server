@@ -55,7 +55,7 @@ async function run() {
     app.post("/jwt", (req, res) => {
       const user = req.body;
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
-        expiresIn: '1h',
+        expiresIn: "1h",
       });
       res.send({ token });
     });
@@ -72,23 +72,24 @@ async function run() {
       }
       next();
     };
-    // verify instructor 
-    const verifyInstructor = async (req,res,next)=>{
+    // verify instructor
+    const verifyInstructor = async (req, res, next) => {
       const email = req.decoded.email;
-      const query = {email:email};
+      const query = { email: email };
       const user = await userCollection.findOne(query);
-      if(user?.role !== 'instructor'){
-        return res.status(403).send({error:true,message:'forbidden message'});
+      if (user?.role !== "instructor") {
+        return res
+          .status(403)
+          .send({ error: true, message: "forbidden message" });
       }
       next();
-    }
+    };
 
-    //users apis
 
-    app.get("/users", verifyJWT,verifyAdmin, async (req, res) => {
-      const result = await userCollection.find().toArray();
-      res.send(result);
-    });
+
+
+    //-----------------------------------------
+
     app.post("/users", async (req, res) => {
       const user = req.body;
       const query = { email: user.email };
@@ -99,8 +100,30 @@ async function run() {
       const result = await userCollection.insertOne(user);
       res.send(result);
     });
+    // find user role
+    app.get("/users/check-role/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const role = {
+        projection: { _id: 0, role: 1 },
+      };
+      const result = await userCollection.findOne(query, role);
+      res.send(result);
+    });
+    
+    app.get('/classes', async(req,res)=>{
+      const result = await classCollection.find().toArray();
+      res.send(result);
+    })
 
-    // make admin
+    // admin related apis-----------------------------------------------------------
+
+    // get all users -------------
+    app.get("/users", verifyJWT, verifyAdmin, async (req, res) => {
+      const result = await userCollection.find().toArray();
+      res.send(result);
+    });
+    // make admin--------------
     app.patch("/users/admin/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
@@ -112,7 +135,6 @@ async function run() {
       const result = await userCollection.updateOne(query, updateDoc);
       res.send(result);
     });
-    // admin related apis
 
     // make instructor ----
     app.patch("/users/instructor/:id", async (req, res) => {
@@ -127,33 +149,22 @@ async function run() {
       res.send(result);
     });
 
-    // find user role
-    app.get("/users/check-role/:email", async (req, res) => {
-      const email = req.params.email;
-      const query = { email: email };
-      const role = {
-        projection: { _id: 0, role: 1 },
-      };
-      const result = await userCollection.findOne(query, role);
+    // instructor related apis --------------------------------------------
+
+    // add a class---------------
+    app.post("/class", verifyJWT, verifyInstructor, async (req, res) => {
+      const newClass = req.body;
+      const result = await classCollection.insertOne(newClass);
       res.send(result);
     });
 
-    // instructor related apis ---------------
-
-    // add a class---------------
-    app.post('/class',verifyJWT,verifyInstructor, async(req,res)=>{
-      const newClass = req.body;
-      const result = await classCollection.insertOne(newClass);
-      res.send(result)
-
-    })
-    
-    app.get('/my-classes',verifyJWT,verifyInstructor, async(req,res)=>{
+    // get my class-------------
+    app.get("/my-classes", verifyJWT, verifyInstructor, async (req, res) => {
       const email = req.query.email;
-      const query = {instructorEmail:email};
+      const query = { instructorEmail: email };
       const result = await classCollection.find(query).toArray();
       res.send(result);
-    })
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
