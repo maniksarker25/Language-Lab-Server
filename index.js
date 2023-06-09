@@ -85,9 +85,6 @@ async function run() {
       next();
     };
 
-
-
-
     //-----------------------------------------
 
     app.post("/users", async (req, res) => {
@@ -110,11 +107,12 @@ async function run() {
       const result = await userCollection.findOne(query, role);
       res.send(result);
     });
-    
-    app.get('/classes', async(req,res)=>{
+
+    // get all classes
+    app.get("/classes", async (req, res) => {
       const result = await classCollection.find().toArray();
       res.send(result);
-    })
+    });
 
     // admin related apis-----------------------------------------------------------
 
@@ -148,6 +146,36 @@ async function run() {
       const result = await userCollection.updateOne(query, updateDoc);
       res.send(result);
     });
+
+    // handle class status -------
+    app.patch("/status/:id", verifyJWT, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const status = req.query.status;
+      const query = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          status: status,
+        },
+      };
+
+      const result = await classCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
+
+    // route for send feedback 
+    app.put('/feedback/:id', async(req,res)=>{
+      const id = req.params.id;
+      const {feedback} = req.body;
+      const query = {_id: new ObjectId(id)};
+      const updateDoc = {
+        $set: {
+          feedback:feedback,
+        },
+      };
+
+      const result = await classCollection.updateOne(query, updateDoc);
+      res.send(result);
+    })
 
     // instructor related apis --------------------------------------------
 
