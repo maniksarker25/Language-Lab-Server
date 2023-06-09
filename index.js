@@ -139,11 +139,20 @@ async function run() {
     });
 
     // instructor related apis ---------------
+
+    // add a class---------------
     app.post('/class',verifyJWT,verifyInstructor, async(req,res)=>{
       const newClass = req.body;
       const result = await classCollection.insertOne(newClass);
       res.send(result)
 
+    })
+    
+    app.get('/my-classes',verifyJWT,verifyInstructor, async(req,res)=>{
+      const email = req.query.email;
+      const query = {instructorEmail:email};
+      const result = await classCollection.find(query).toArray();
+      res.send(result);
     })
 
     // Send a ping to confirm a successful connection
