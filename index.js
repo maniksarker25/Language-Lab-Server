@@ -162,7 +162,7 @@ async function run() {
       res.send(result);
     });
 
-    // route for send feedback 
+    // route for send feedback----------- 
     app.put('/feedback/:id', async(req,res)=>{
       const id = req.params.id;
       const {feedback} = req.body;
@@ -179,14 +179,14 @@ async function run() {
 
     // instructor related apis --------------------------------------------
 
-    // add a class---------------
+    // add a class----------------
     app.post("/class", verifyJWT, verifyInstructor, async (req, res) => {
       const newClass = req.body;
       const result = await classCollection.insertOne(newClass);
       res.send(result);
     });
 
-    // get my class-------------
+    // get my classes-------------
     app.get("/my-classes", verifyJWT, verifyInstructor, async (req, res) => {
       const email = req.query.email;
       const query = { instructorEmail: email };
