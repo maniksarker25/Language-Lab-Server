@@ -124,6 +124,8 @@ async function run() {
       res.send(result)
     })
 
+
+
     // student related apis --------------------
 
     app.post('/select-class', async(req,res)=>{
@@ -131,14 +133,26 @@ async function run() {
       const result = await selectedClassCollection.insertOne(selectClass);
       res.send(result)
     })
-
+    // get selected classes
     app.get('/selected-classes',verifyJWT, async(req,res)=>{
       const email = req.query.email;
       const query = {studentEmail:email};
       const result = await selectedClassCollection.find(query).toArray();
-      console.log(result)
+      // console.log(result)
       res.send(result)
     })
+
+    // delete a class
+    app.delete('/delete-class', async(req,res)=>{
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)};
+      const result = await selectedClassCollection.deleteOne(query);
+      res.send(result);
+    })
+
+
+
+
 
     // admin related apis-----------------------------------------------------------
 
