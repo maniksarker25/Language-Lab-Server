@@ -254,7 +254,7 @@ async function run() {
 
 
     // payment related api
-    // create payment intent-----------------------
+    // create payment intent-------------
     app.post("/create-payment-intent", verifyJWT, async (req, res) => {
       const { price } = req.body;
       const amount = parseInt(price * 100);
@@ -269,7 +269,7 @@ async function run() {
       });
     });
 
-    // payment --------------
+    // payment ---------------
     app.post("/payments", verifyJWT, async (req, res) => {
       const payment = req.body;
       const insertResult = await paymentCollection.insertOne(payment);
