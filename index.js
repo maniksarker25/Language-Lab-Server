@@ -31,7 +31,7 @@ const verifyJWT = (req, res, next) => {
   });
 };
 
-const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId, MongoAWSError } = require("mongodb");
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.16yxiu9.mongodb.net/?retryWrites=true&w=majority`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -124,15 +124,26 @@ async function run() {
       res.send(result)
     })
 
+    // get all instructor ----
+    app.get('/all-instructor', async(req,res)=>{
+      const role = req.query.role;
+      const query = {role:role};
+      const result = await userCollection.find(query).toArray();
+      res.send(result)
+    })
 
 
-    // student related apis --------------------
 
-    app.post('/select-class', async(req,res)=>{
+    // student related apis -------------------------------------
+
+
+    // select class --------
+    app.post('/select-class',verifyJWT, async(req,res)=>{
       const {selectClass} = req.body;
       const result = await selectedClassCollection.insertOne(selectClass);
       res.send(result)
     })
+
     // get selected classes
     app.get('/selected-classes',verifyJWT, async(req,res)=>{
       const email = req.query.email;
@@ -143,15 +154,12 @@ async function run() {
     })
 
     // delete a class
-    app.delete('/delete-class', async(req,res)=>{
+    app.delete('/delete-class/:id',verifyJWT, async(req,res)=>{
       const id = req.params.id;
       const query = {_id: new ObjectId(id)};
       const result = await selectedClassCollection.deleteOne(query);
       res.send(result);
     })
-
-
-
 
 
     // admin related apis-----------------------------------------------------------
@@ -161,6 +169,7 @@ async function run() {
       const result = await userCollection.find().toArray();
       res.send(result);
     });
+
     // make admin--------------
     app.patch("/users/admin/:id", async (req, res) => {
       const id = req.params.id;
@@ -217,6 +226,10 @@ async function run() {
       res.send(result);
     })
 
+
+
+
+
     // instructor related apis --------------------------------------------
 
     // add a class----------------
@@ -233,6 +246,12 @@ async function run() {
       const result = await classCollection.find(query).toArray();
       res.send(result);
     });
+
+
+
+
+
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
