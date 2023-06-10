@@ -114,6 +114,21 @@ async function run() {
       res.send(result);
     });
 
+    // get approved classes-------
+
+    app.get('/approved-classes', async(req,res)=>{
+      const status = req.query.status;
+      const query = {status:status};
+      const result = await classCollection.find(query).toArray();
+      res.send(result)
+    })
+
+
+
+
+
+
+
     // admin related apis-----------------------------------------------------------
 
     // get all users -------------
