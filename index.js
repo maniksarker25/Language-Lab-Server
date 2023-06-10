@@ -50,6 +50,7 @@ async function run() {
 
     const userCollection = client.db("languageLab").collection("users");
     const classCollection = client.db("languageLab").collection("classes");
+    const selectedClassCollection = client.db("languageLab").collection("selectedClass");
 
     //secure apis--------------------------------------
     app.post("/jwt", (req, res) => {
@@ -123,11 +124,21 @@ async function run() {
       res.send(result)
     })
 
+    // student related apis --------------------
 
+    app.post('/select-class', async(req,res)=>{
+      const {selectClass} = req.body;
+      const result = await selectedClassCollection.insertOne(selectClass);
+      res.send(result)
+    })
 
-
-
-
+    app.get('/selected-classes',verifyJWT, async(req,res)=>{
+      const email = req.query.email;
+      const query = {studentEmail:email};
+      const result = await selectedClassCollection.find(query).toArray();
+      console.log(result)
+      res.send(result)
+    })
 
     // admin related apis-----------------------------------------------------------
 
