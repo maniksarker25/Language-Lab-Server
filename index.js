@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
+const stripe = require("stripe")(process.env.PAYMENT_SECRET_KEY);
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -31,7 +32,12 @@ const verifyJWT = (req, res, next) => {
   });
 };
 
-const { MongoClient, ServerApiVersion, ObjectId, MongoAWSError } = require("mongodb");
+const {
+  MongoClient,
+  ServerApiVersion,
+  ObjectId,
+  MongoAWSError,
+} = require("mongodb");
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.16yxiu9.mongodb.net/?retryWrites=true&w=majority`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -50,7 +56,13 @@ async function run() {
 
     const userCollection = client.db("languageLab").collection("users");
     const classCollection = client.db("languageLab").collection("classes");
-    const selectedClassCollection = client.db("languageLab").collection("selectedClass");
+    const selectedClassCollection = client
+      .db("languageLab")
+      .collection("selectedClass");
+    const paymentCollection = client
+      .db("languageLab")
+      .collection("payments");
+    
 
     //secure apis--------------------------------------
     app.post("/jwt", (req, res) => {
@@ -117,50 +129,46 @@ async function run() {
 
     // get approved classes-------
 
-    app.get('/approved-classes', async(req,res)=>{
+    app.get("/approved-classes", async (req, res) => {
       const status = req.query.status;
-      const query = {status:status};
+      const query = { status: status };
       const result = await classCollection.find(query).toArray();
-      res.send(result)
-    })
+      res.send(result);
+    });
 
     // get all instructor ----
-    app.get('/all-instructor', async(req,res)=>{
+    app.get("/all-instructor", async (req, res) => {
       const role = req.query.role;
-      const query = {role:role};
+      const query = { role: role };
       const result = await userCollection.find(query).toArray();
-      res.send(result)
-    })
-
-
+      res.send(result);
+    });
 
     // student related apis -------------------------------------
 
-
     // select class --------
-    app.post('/select-class',verifyJWT, async(req,res)=>{
-      const {selectClass} = req.body;
+    app.post("/select-class", verifyJWT, async (req, res) => {
+      const { selectClass } = req.body;
       const result = await selectedClassCollection.insertOne(selectClass);
-      res.send(result)
-    })
+      res.send(result);
+    });
 
     // get selected classes
-    app.get('/selected-classes',verifyJWT, async(req,res)=>{
+    app.get("/selected-classes", verifyJWT, async (req, res) => {
       const email = req.query.email;
-      const query = {studentEmail:email};
+      const query = { studentEmail: email };
       const result = await selectedClassCollection.find(query).toArray();
       // console.log(result)
-      res.send(result)
-    })
+      res.send(result);
+    });
 
     // delete a class
-    app.delete('/delete-class/:id',verifyJWT, async(req,res)=>{
+    app.delete("/delete-class/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
-      const query = {_id: new ObjectId(id)};
+      const query = { _id: new ObjectId(id) };
       const result = await selectedClassCollection.deleteOne(query);
       res.send(result);
-    })
-
+    });
 
     // admin related apis-----------------------------------------------------------
 
@@ -211,24 +219,20 @@ async function run() {
       res.send(result);
     });
 
-    // route for send feedback----------- 
-    app.put('/feedback/:id', async(req,res)=>{
+    // route for send feedback-----------
+    app.put("/feedback/:id", async (req, res) => {
       const id = req.params.id;
-      const {feedback} = req.body;
-      const query = {_id: new ObjectId(id)};
+      const { feedback } = req.body;
+      const query = { _id: new ObjectId(id) };
       const updateDoc = {
         $set: {
-          feedback:feedback,
+          feedback: feedback,
         },
       };
 
       const result = await classCollection.updateOne(query, updateDoc);
       res.send(result);
-    })
-
-
-
-
+    });
 
     // instructor related apis --------------------------------------------
 
@@ -249,9 +253,30 @@ async function run() {
 
 
 
+    // payment related api
+    // create payment intent-----------------------
+    app.post("/create-payment-intent", verifyJWT, async (req, res) => {
+      const { price } = req.body;
+      const amount = parseInt(price * 100);
+      console.log(price, amount);
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: "usd",
+        payment_method_types: ["card"],
+      });
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+    });
 
-
-
+    // payment --------------
+    app.post("/payments", verifyJWT, async (req, res) => {
+      const payment = req.body;
+      const insertResult = await paymentCollection.insertOne(payment);
+      const query = {_id: new ObjectId(payment.selectedClassId)};
+      const deleteResult = await selectedClassCollection.deleteOne(query);
+      res.send({ insertResult, deleteResult });
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
