@@ -59,10 +59,7 @@ async function run() {
     const selectedClassCollection = client
       .db("languageLab")
       .collection("selectedClass");
-    const paymentCollection = client
-      .db("languageLab")
-      .collection("payments");
-    
+    const paymentCollection = client.db("languageLab").collection("payments");
 
     //secure apis--------------------------------------
     app.post("/jwt", (req, res) => {
@@ -144,7 +141,7 @@ async function run() {
       res.send(result);
     });
 
-    // student related apis -------------------------------------
+    // student related apis --------------------------------------------------------------------
 
     // select class --------
     app.post("/select-class", verifyJWT, async (req, res) => {
@@ -169,6 +166,15 @@ async function run() {
       const result = await selectedClassCollection.deleteOne(query);
       res.send(result);
     });
+
+    // my enrolled class
+    app.get('/enrolled-classes', async(req,res)=>{
+      const email = req.query.email;
+      const query = {email:email}
+      const result = await paymentCollection.find(query).toArray();
+      res.send(result);
+
+    })
 
     // admin related apis-----------------------------------------------------------
 
@@ -251,8 +257,6 @@ async function run() {
       res.send(result);
     });
 
-
-
     // payment related api
     // create payment intent-------------
     app.post("/create-payment-intent", verifyJWT, async (req, res) => {
@@ -273,9 +277,19 @@ async function run() {
     app.post("/payments", verifyJWT, async (req, res) => {
       const payment = req.body;
       const insertResult = await paymentCollection.insertOne(payment);
-      const query = {_id: new ObjectId(payment.selectedClassId)};
+      const query = { _id: new ObjectId(payment.selectedClassId) };
+      const query2 = { _id: new ObjectId(payment.classId) };
+      const previousClass = await classCollection.findOne(query2);
+      // console.log(previousClass);
+      const updateDoc = {
+        $set: {
+          availableSeat: --previousClass.availableSeat,
+        },
+      };
+
+      const updateResult = await classCollection.updateOne(query2,updateDoc);
       const deleteResult = await selectedClassCollection.deleteOne(query);
-      res.send({ insertResult, deleteResult });
+      res.send({ insertResult, deleteResult,updateResult });
     });
 
     // Send a ping to confirm a successful connection
