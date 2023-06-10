@@ -168,9 +168,9 @@ async function run() {
     });
 
     // my enrolled class
-    app.get('/enrolled-classes', async(req,res)=>{
+    app.get('/enrolled-classes',verifyJWT, async(req,res)=>{
       const email = req.query.email;
-      const query = {email:email}
+      const query = {studentEmail:email}
       const result = await paymentCollection.find(query).toArray();
       res.send(result);
 
