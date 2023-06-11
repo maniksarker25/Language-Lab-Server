@@ -176,6 +176,17 @@ async function run() {
 
     })
 
+    // payment history
+    app.get('/payment-history',verifyJWT, async(req,res)=>{
+      const email = req.query.email;
+      const query = {studentEmail:email}
+      const result = await paymentCollection.find(query).sort({data:-1}).toArray();
+      res.send(result);
+
+    })
+
+
+
     // admin related apis-----------------------------------------------------------
 
     // get all users -------------
