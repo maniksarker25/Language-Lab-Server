@@ -180,7 +180,7 @@ async function run() {
     app.get('/payment-history',verifyJWT, async(req,res)=>{
       const email = req.query.email;
       const query = {studentEmail:email}
-      const result = await paymentCollection.find(query).sort({data:-1}).toArray();
+      const result = await paymentCollection.find(query).sort({date:-1}).toArray();
       res.send(result);
 
     })
@@ -295,6 +295,7 @@ async function run() {
       const updateDoc = {
         $set: {
           availableSeat: --previousClass.availableSeat,
+          totalEnrolled: ++previousClass.totalEnrolled || 0
         },
       };
 
