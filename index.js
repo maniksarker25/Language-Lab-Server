@@ -129,7 +129,7 @@ async function run() {
     app.get("/approved-classes", async (req, res) => {
       const status = req.query.status;
       const query = { status: status };
-      const result = await classCollection.find(query).toArray();
+      const result = await classCollection.find(query).sort({totalEnrolled:-1}).toArray();
       res.send(result);
     });
 
