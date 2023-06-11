@@ -52,7 +52,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
     const userCollection = client.db("languageLab").collection("users");
     const classCollection = client.db("languageLab").collection("classes");
@@ -129,7 +129,10 @@ async function run() {
     app.get("/approved-classes", async (req, res) => {
       const status = req.query.status;
       const query = { status: status };
-      const result = await classCollection.find(query).sort({totalEnrolled:-1}).toArray();
+      const result = await classCollection
+        .find(query)
+        .sort({ totalEnrolled: -1 })
+        .toArray();
       res.send(result);
     });
 
@@ -168,24 +171,23 @@ async function run() {
     });
 
     // my enrolled class
-    app.get('/enrolled-classes',verifyJWT, async(req,res)=>{
+    app.get("/enrolled-classes", verifyJWT, async (req, res) => {
       const email = req.query.email;
-      const query = {studentEmail:email}
+      const query = { studentEmail: email };
       const result = await paymentCollection.find(query).toArray();
       res.send(result);
-
-    })
+    });
 
     // payment history
-    app.get('/payment-history',verifyJWT, async(req,res)=>{
+    app.get("/payment-history", verifyJWT, async (req, res) => {
       const email = req.query.email;
-      const query = {studentEmail:email}
-      const result = await paymentCollection.find(query).sort({date:-1}).toArray();
+      const query = { studentEmail: email };
+      const result = await paymentCollection
+        .find(query)
+        .sort({ date: -1 })
+        .toArray();
       res.send(result);
-
-    })
-
-
+    });
 
     // admin related apis-----------------------------------------------------------
 
@@ -295,13 +297,13 @@ async function run() {
       const updateDoc = {
         $set: {
           availableSeat: --previousClass.availableSeat,
-          totalEnrolled: ++previousClass.totalEnrolled || 0
+          totalEnrolled: ++previousClass.totalEnrolled || 0,
         },
       };
 
-      const updateResult = await classCollection.updateOne(query2,updateDoc);
+      const updateResult = await classCollection.updateOne(query2, updateDoc);
       const deleteResult = await selectedClassCollection.deleteOne(query);
-      res.send({ insertResult, deleteResult,updateResult });
+      res.send({ insertResult, deleteResult, updateResult });
     });
 
     // Send a ping to confirm a successful connection
