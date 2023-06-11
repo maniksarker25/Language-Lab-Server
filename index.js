@@ -94,6 +94,18 @@ async function run() {
       }
       next();
     };
+    // verify student 
+    const verifyStudent = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      if (user?.role !== "student") {
+        return res
+          .status(403)
+          .send({ error: true, message: "forbidden message" });
+      }
+      next();
+    };
 
     //-----------------------------------------
 
@@ -154,7 +166,7 @@ async function run() {
     });
 
     // get selected classes
-    app.get("/selected-classes", verifyJWT, async (req, res) => {
+    app.get("/selected-classes", verifyJWT,verifyStudent, async (req, res) => {
       const email = req.query.email;
       const query = { studentEmail: email };
       const result = await selectedClassCollection.find(query).toArray();
@@ -163,7 +175,7 @@ async function run() {
     });
 
     // delete a class
-    app.delete("/delete-class/:id", verifyJWT, async (req, res) => {
+    app.delete("/delete-class/:id", verifyJWT,verifyStudent, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await selectedClassCollection.deleteOne(query);
@@ -171,7 +183,7 @@ async function run() {
     });
 
     // my enrolled class
-    app.get("/enrolled-classes", verifyJWT, async (req, res) => {
+    app.get("/enrolled-classes", verifyJWT,verifyStudent, async (req, res) => {
       const email = req.query.email;
       const query = { studentEmail: email };
       const result = await paymentCollection.find(query).toArray();
@@ -179,7 +191,7 @@ async function run() {
     });
 
     // payment history
-    app.get("/payment-history", verifyJWT, async (req, res) => {
+    app.get("/payment-history", verifyJWT,verifyStudent, async (req, res) => {
       const email = req.query.email;
       const query = { studentEmail: email };
       const result = await paymentCollection
