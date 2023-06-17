@@ -182,7 +182,7 @@ async function run() {
       res.send(result);
     });
 
-    // my enrolled class
+    // my enrolled class-------------------------
     app.get("/enrolled-classes", verifyJWT,verifyStudent, async (req, res) => {
       const email = req.query.email;
       const query = { studentEmail: email };
